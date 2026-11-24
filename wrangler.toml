@@ -8,6 +8,6 @@ binding = "ASSETS"
 
 [[d1_databases]]
 binding = "DB"
-database_name = "indian-minerals-market"
+database_name = "indian-minerals-market-db"
 database_id = "508d94f0-d8cb-4de5-a2d2-22eeaacd13b2"
 migrations_dir = "migrations"
