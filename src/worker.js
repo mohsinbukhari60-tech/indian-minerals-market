@@ -33,10 +33,12 @@ export default {
       if (url.pathname === "/api/leads" && request.method === "POST") {
         const origin = request.headers.get("Origin");
         if (origin && origin !== url.origin) return json({ success: false, error: "Request origin not allowed." }, 403);
-        const length = Number(request.headers.get("Content-Length") || 0);
-        if (length > 12000) return json({ success: false, error: "Submission is too large." }, 413);
+        let rawBody;
+        try { rawBody = await request.text(); } catch { return json({ success: false, error: "Could not read request." }, 400); }
+        if (new TextEncoder().encode(rawBody).byteLength > 12000) return json({ success: false, error: "Submission is too large." }, 413);
         let body;
-        try { body = await request.json(); } catch { return json({ success: false, error: "Invalid request." }, 400); }
+        try { body = JSON.parse(rawBody); } catch { return json({ success: false, error: "Invalid request." }, 400); }
+        if (!body || typeof body !== "object" || Array.isArray(body)) return json({ success: false, error: "Invalid request." }, 400);
         // Honeypot: silently accept bot submissions without storing them.
         if (clean(body.website, 200)) return json({ success: true, message: "Your enquiry has been received for review." }, 202);
         const type = clean(body.type, 8);
@@ -59,6 +61,9 @@ export default {
         } catch {
           return json({ success: false, error: "We could not save your enquiry. Please try again later." }, 503);
         }
+      }
+      if (url.pathname === "/api/leads" || url.pathname === "/api/health") {
+        return json({ success: false, error: "Method not allowed." }, 405);
       }
       return json({ success: false, error: "API route not found." }, 404);
     }
